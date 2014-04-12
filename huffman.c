@@ -41,6 +41,29 @@ pq_min_delete(node_t **head) {
 
 
 node_t*
+push(node_t *head, node_t *node) {
+    node->next = head;
+
+    return node;
+}
+
+node_t*
+pop(node_t **head) {
+    node_t *node;
+
+    if(head != NULL) {
+        node = *head;
+
+        *head = (*head)->next;
+
+        return node;
+    }
+
+    return NULL;
+}
+
+
+node_t*
 mk_node(char character, int freq) {
     node_t *node;
     node = malloc(sizeof(node_t));
@@ -56,7 +79,8 @@ int
 main(void)
 {
     node_t *head = NULL, *list_head = NULL, *left, *right, *root;
-    char input;
+    char input, code[26];       // code length is max-depth
+
     unsigned int frequencies[26] = {0}, i, char_count = 0, weight;
 
     // Input sequence
