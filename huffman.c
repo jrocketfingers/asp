@@ -33,7 +33,9 @@ node_t*
 pq_min_delete(node_t **head) {
     node_t *min = *head;
 
-    *head = (*head)->next;
+    if(*head != NULL)
+        *head = (*head)->next;
+
     return min;
 }
 
@@ -53,35 +55,47 @@ mk_node(char character, int freq) {
 int
 main(void)
 {
-    node_t *head = NULL, *left, *right, *root;
+    node_t *head = NULL, *list_head = NULL, *left, *right, *root;
     char input;
     unsigned int frequencies[26] = {0}, i, char_count = 0, weight;
-
-    input = '\n';
 
     // Input sequence
     while(input != '\n') {
         input = getchar();
 
         frequencies[input - 'A']++;
-        char_count++;
     }
 
     // Frequency data
-    for(i = 0; i < 26; i++)
-        head = insert_pq(head, mk_node(i + 'A', frequencies[i]));
+    for(i = 0; i < 26; i++) {
+        if(frequencies[i] != 0) {
+            head = insert_pq(head, mk_node(i + 'A', frequencies[i]));
+            char_count++;
+        }
+    }
 
     // Huffman
     for(i = 0; i < char_count - 1; i++) {
         root = mk_node('\0', 0);
         left = pq_min_delete(&head);
         right = pq_min_delete(&head);
+
+        left->next = right;
+        right->next = list_head;
+        list_head = left;
+
         root->freq = left->freq + right->freq;
 
         root->child[0] = left;
         root->child[1] = right;
 
         insert_pq(head, root);
+    }
+
+    while(list_head != NULL) {
+        if(list_head->character >= 'A' && list_head->character <= 'Z')
+            printf("freq: %d; character: %c\n", list_head->freq, list_head->character);
+        list_head = list_head->next;
     }
 
     return 0;
