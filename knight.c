@@ -41,13 +41,36 @@ print_board(int **table, int m, int n) {
 }
 
 
+void
+deallocate_tree(node_t *root) {
+    node_t *next, *old = NULL;
+
+    next = root;
+
+    while(next->options[next->next_index - 1] != NULL)
+        next = next->options[next->next_index - 1];
+
+    while(old != root) {
+        old = next->parent;
+        free(next);
+        next = old;
+    }
+
+    free(old);
+}
+
+
 int
 main(void) {
     int dx[] = {1, 2, 2, 1, -1, -2, -2, -1};
     int dy[] = {2, 1, -1, -2, -2, -1, 1, 2};
-    int **table, **neighbors;
+    int **table;
 
-    int m, n, x, y, nx, ny, i, j, k;
+    int m, n, x, y, nx, ny, i;
+
+    node_t *root, *next, *new_option, *old;
+
+
 
     scanf("%d%d", &m, &n);
 
@@ -63,25 +86,10 @@ main(void) {
     }
 
     table = malloc(m * sizeof(int *));
-    neighbors = malloc(m * sizeof(int *));
-    for(i = 0; i < m; i++) {
+    for(i = 0; i < m; i++)
         table[i] = calloc(n, sizeof(int));
-        neighbors[i] = malloc(n * sizeof(int));
-        for(j = 0; j < n; j++) {
-            neighbors[i][j] = 0;
-            for(k = 0; k < 8; k++) {
-                nx = i + dx[k];
-                ny = j + dx[k];
-                neighbors[i][j] += is_valid(nx, ny, m, n);
-            }
-        }
-    }
-
-    /*print_board(neighbors, m, n);*/
 
     int step = 0;
-
-    node_t *root, *next, *new_option, *old;
     root = mk_node(x, y, NULL);
 
     next = root;
@@ -109,6 +117,7 @@ main(void) {
 
         if(step >= m * n) {                     // if we've stepped through
             print_board(table, m, n);           // print out the solution
+            printf("\nSolved.\n");
             break;                              // and leave
         }
 
@@ -131,4 +140,12 @@ main(void) {
                                                 // counter.
         }
     }
+
+    // deallocation
+    for(i = 0; i < m; i++)
+        free(table[i]);
+
+    free(table);
+
+    deallocate_tree(root);
 }
