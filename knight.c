@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct node_t {
     int x;
@@ -42,21 +43,17 @@ print_board(int **table, int m, int n) {
 
 int
 main(void) {
-    int dx[] = {1, -1, 2, -2, 1, -1, 2, -2};
-    int dy[] = {2, 2, -1, -1, -2, -2, 1, 1};
-    int **table;
+    int dx[] = {1, 2, 2, 1, -1, -2, -2, -1};
+    int dy[] = {2, 1, -1, -2, -2, -1, 1, 2};
+    int **table, **neighbors;
 
-    int m, n, x, y, nx, ny, i;
+    int m, n, x, y, nx, ny, i, j, k;
 
     scanf("%d%d", &m, &n);
 
     if(m == 1) {
         printf("1\n");
         exit(0);
-    }
-    else if(m < 4 || n < 4) {
-        printf("Unsolvable, make m and n > 4. Exiting.");
-        exit(1);
     }
 
     scanf("%d%d", &x, &y);
@@ -66,7 +63,21 @@ main(void) {
     }
 
     table = malloc(m * sizeof(int *));
-    for(i = 0; i < m; i++) table[i] = calloc(n, sizeof(int));
+    neighbors = malloc(m * sizeof(int *));
+    for(i = 0; i < m; i++) {
+        table[i] = calloc(n, sizeof(int));
+        neighbors[i] = malloc(n * sizeof(int));
+        for(j = 0; j < n; j++) {
+            neighbors[i][j] = 0;
+            for(k = 0; k < 8; k++) {
+                nx = i + dx[k];
+                ny = j + dx[k];
+                neighbors[i][j] += is_valid(nx, ny, m, n);
+            }
+        }
+    }
+
+    /*print_board(neighbors, m, n);*/
 
     int step = 0;
 
@@ -80,37 +91,44 @@ main(void) {
 
         table[next->x][next->y] = step;
 
-        print_board(table, m, n);
-        printf("\n");
-
         while(next->next_index < 8) {
             nx = next->x + dx[next->next_index];
             ny = next->y + dy[next->next_index];
-            if(is_valid(nx, ny, m, n) && table[nx][ny] == 0) {
-                new_option = mk_node(nx, ny, next);
-                next->options[next->next_index] = new_option;
-                next->next_index++;
-                next = new_option;
+            if(is_valid(nx, ny, m, n) && table[nx][ny] == 0) {      // if the choice is valid and we've not yet been there
+                new_option = mk_node(nx, ny, next);                 // construct the new potential node;
+                next->options[next->next_index] = new_option;       // make note of it as the next in that direction
+                next->next_index++;                                 // move up the next_index
+                next = new_option;                                  // head over to the new choice
                 break;
             }
-            else {
-                next->options[next->next_index] = NULL;
-                next->next_index++;
+            else {                                                  // if it ain't valid,
+                next->options[next->next_index] = NULL;             // make sure you mark it
+                next->next_index++;                                 // and keep going
             }
         }
 
-        if(next->next_index >= 8) {
-            table[next->x][next->y] = 0;
-            old = next;
-            next = next->parent;
-
-            free(old);
-            step -= 2;
+        if(step >= m * n) {                     // if we've stepped through
+            print_board(table, m, n);           // print out the solution
+            break;                              // and leave
         }
 
-        if(step >= m * n) {
-            print_board(table, m, n);
-            break;
+        if(next->next_index >= 8) {             // if it did run out of options
+            table[next->x][next->y] = 0;        // delete the current step
+
+            if(next == root) {
+                print_board(table, m, n);
+                printf("Unsolvable!");
+                break;
+            }
+
+            old = next;                         // preserve it for actual deletion
+            next = next->parent;                // go back to the parent
+
+            free(old);                          // free the stub child
+            step -= 2;                          // go back "two" steps (considering
+                                                // that the first thing the loop
+                                                // does is increment the step
+                                                // counter.
         }
     }
 }
