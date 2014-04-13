@@ -16,7 +16,7 @@ mk_node(int x, int y, node_t *parent) {
     node->x = x;
     node->y = y;
 
-    node->parent = 0;
+    node->parent = parent;
     node->next_index = 0;
 
     return node;
@@ -28,6 +28,17 @@ is_valid(int x, int y, int m, int n) {
     return x >= 0 && y >= 0 && x < m && y < n;
 }
 
+void
+print_board(int **table, int m, int n) {
+    int i, j;
+    for(i = 0; i < m; i++) {
+        for(j = 0; j < n; j++) {
+            printf("%3d ", table[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 
 int
 main(void) {
@@ -35,7 +46,7 @@ main(void) {
     int dy[] = {2, 2, -1, -1, -2, -2, 1, 1};
     int **table;
 
-    int m, n, x, y, i;
+    int m, n, x, y, nx, ny, i;
 
     scanf("%d%d", &m, &n);
 
@@ -59,18 +70,47 @@ main(void) {
 
     int step = 0;
 
-    node_t *root, *next;
+    node_t *root, *next, *new_option, *old;
     root = mk_node(x, y, NULL);
 
     next = root;
 
     while(1) {
-        table[next->x][next->y];
+        step++;
 
-        if(next->next_index < 8) {
-            next = next->options[next->next_index];
-        } else {
+        table[next->x][next->y] = step;
+
+        print_board(table, m, n);
+        printf("\n");
+
+        while(next->next_index < 8) {
+            nx = next->x + dx[next->next_index];
+            ny = next->y + dy[next->next_index];
+            if(is_valid(nx, ny, m, n) && table[nx][ny] == 0) {
+                new_option = mk_node(nx, ny, next);
+                next->options[next->next_index] = new_option;
+                next->next_index++;
+                next = new_option;
+                break;
+            }
+            else {
+                next->options[next->next_index] = NULL;
+                next->next_index++;
+            }
+        }
+
+        if(next->next_index >= 8) {
+            table[next->x][next->y] = 0;
+            old = next;
             next = next->parent;
+
+            free(old);
+            step -= 2;
+        }
+
+        if(step >= m * n) {
+            print_board(table, m, n);
+            break;
         }
     }
 }
